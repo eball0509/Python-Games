@@ -1,20 +1,21 @@
 """Main menu / game-select screen (R4).
 
 build_menu_scene() is the one place that lists every playable entry.
-When you port Asteroids (R5), swap its ComingSoonScene factory for the
-real AsteroidsScene class -- same for GhostBusters (R6) and Salvage Run
-(R7). Nothing else about the menu needs to change.
+Asteroids now points at the real AsteroidsScene (R5). GhostBusters and
+Salvage Run still point at ComingSoonScene until R6/R7 land -- swap
+those the same way once each is ported/built.
 """
 
 from functools import partial
 import pygame
 from core.scene import Scene
 from scenes.placeholder_scene import ComingSoonScene
+from scenes.asteroids_scene import AsteroidsScene
 
 
 def build_menu_scene(manager, app):
     entries = [
-        ("Asteroids", "Classic space shooter", partial(ComingSoonScene, game_name="Asteroids")),
+        ("Asteroids", "Classic space shooter", lambda m, a: AsteroidsScene(m, a)),
         ("GhostBusters", "Platformer w/ parallax", partial(ComingSoonScene, game_name="GhostBusters")),
         ("Salvage Run", "NEW: mining run", partial(ComingSoonScene, game_name="Salvage Run")),
         ("Settings", "Volume & controls", partial(ComingSoonScene, game_name="Settings")),
