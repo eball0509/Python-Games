@@ -3,20 +3,6 @@ onto the shared Scene/App architecture. Gameplay behavior (movement,
 timers, scoring, collision, silent reset-to-start-screen on death) is
 preserved to match the original as closely as possible -- see ADR-0002.
 
-Structural changes from the original script:
-  - one shared App owns pygame.init()/window/clock instead of this file
-    owning them
-  - the original's global pygame.time.set_timer() asteroid spawn timers
-    are replaced with per-scene delta-time accumulators (SPAWN_SCHEDULE
-    below), since a global OS-level timer would keep firing into the
-    event queue even while a different scene is active -- same spawn
-    intervals (2s/6s/10s/15s/20s), different mechanism
-  - asset loading goes through the shared, cached AssetManager instead
-    of a raw pygame.image.load()/mixer.Sound() per object
-  - ESC now returns to the main menu instead of quitting the whole
-    process -- the previous behavior doesn't make sense once multiple
-    games share one launcher (this is a navigation change, not a
-    gameplay change, so it's outside ADR-0002's boundary)
 """
 
 import os

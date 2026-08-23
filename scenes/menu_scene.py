@@ -11,12 +11,13 @@ import pygame
 from core.scene import Scene
 from scenes.placeholder_scene import ComingSoonScene
 from scenes.asteroids_scene import AsteroidsScene
+from scenes.ghostbusters_scene import GhostBustersScene
 
 
 def build_menu_scene(manager, app):
     entries = [
         ("Asteroids", "Classic space shooter", lambda m, a: AsteroidsScene(m, a)),
-        ("GhostBusters", "Platformer w/ parallax", partial(ComingSoonScene, game_name="GhostBusters")),
+        ("GhostBusters", "Platformer w/ parallax", lambda m, a: GhostBustersScene(m, a)),
         ("Salvage Run", "NEW: mining run", partial(ComingSoonScene, game_name="Salvage Run")),
         ("Settings", "Volume & controls", partial(ComingSoonScene, game_name="Settings")),
     ]
