@@ -87,15 +87,9 @@ class AsteroidsScene(Scene):
             if event.type != pygame.KEYDOWN:
                 continue
 
-            # ESC returns to the shared menu from ANY state, including the
-            # start screen -- the original script never wired ESC up on
-            # its start screen at all (it only checked SPACE there), but
-            # that's a navigation gap, not gameplay behavior, so it's
-            # fair game to extend rather than a parity violation.
-            if event.key == pygame.K_ESCAPE:
-                from scenes.menu_scene import build_menu_scene
-                self.manager.switch_to(build_menu_scene(self.manager, self.app))
-                return
+            # ESC is no longer handled here -- App intercepts it centrally
+            # and pushes the shared pause overlay (R8, core/pause_scene.py)
+            # before this scene ever sees the event.
 
             if not self.started:
                 if event.key == pygame.K_SPACE:
@@ -156,6 +150,7 @@ class AsteroidsScene(Scene):
         full_path = os.path.join(self.assets.base_path, relative_path)
         pygame.mixer.music.load(full_path)
         pygame.mixer.music.play(loops=-1)
+        pygame.mixer.music.set_volume(self.assets.master_volume)
         self.music_started = True
 
     def draw(self, surface):

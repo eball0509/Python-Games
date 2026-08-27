@@ -11,6 +11,11 @@ from abc import ABC, abstractmethod
 class Scene(ABC):
     """Base class every game/menu screen must implement."""
 
+    # R8: whether pressing ESC on this scene should open the shared pause
+    # overlay. MenuScene and PauseScene itself opt out (pausing the menu,
+    # or pausing the pause screen, doesn't make sense).
+    pauseable = True
+
     def __init__(self, manager):
         self.manager = manager  # lets a scene ask to switch to another scene
 

@@ -13,6 +13,7 @@ from scenes.placeholder_scene import ComingSoonScene
 from scenes.asteroids_scene import AsteroidsScene
 from scenes.ghostbusters_scene import GhostBustersScene
 from scenes.salvage_run_scene import SalvageRunScene
+from scenes.settings_scene import SettingsScene
 
 
 def build_menu_scene(manager, app):
@@ -20,7 +21,7 @@ def build_menu_scene(manager, app):
         ("Asteroids", "Classic space shooter", lambda m, a: AsteroidsScene(m, a)),
         ("GhostBusters", "Platformer w/ parallax", lambda m, a: GhostBustersScene(m, a)),
         ("Salvage Run", "NEW: mining run", lambda m, a: SalvageRunScene(m, a)),
-        ("Settings", "Volume & controls", partial(ComingSoonScene, game_name="Settings")),
+        ("Settings", "Volume & controls", lambda m, a: SettingsScene(m, a)),
     ]
     return MenuScene(manager, app, entries)
 
@@ -29,6 +30,8 @@ class MenuScene(Scene):
     """entries: list of (label, subtitle, scene_factory).
     scene_factory(manager, app) -> Scene, called when that entry is selected.
     """
+
+    pauseable = False  # ESC here quits the app directly, not the shared pause overlay
 
     ROW_HEIGHT = 70
     ROW_GAP = 16

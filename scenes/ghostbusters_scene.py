@@ -28,6 +28,7 @@ Structural changes from the original:
   - Button click detection still happens inside draw(), matching the
     original's design where Button.draw() both renders AND polls the
     mouse for a click in the same call
+
 """
 
 import os
@@ -173,7 +174,7 @@ class GhostBustersScene(Scene):
             music_path = os.path.join(self.assets.base_path, "ghostbusters/mixkit-complex-desire-1093.mp3")
             pygame.mixer.music.load(music_path)
             pygame.mixer.music.play(loops=-1)
-            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.set_volume(self.assets.master_volume)
             self.music_started = True
 
     def on_exit(self):
@@ -209,10 +210,14 @@ class GhostBustersScene(Scene):
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_ESCAPE, pygame.K_q):
-                    from scenes.menu_scene import build_menu_scene
-                    self.manager.switch_to(build_menu_scene(self.manager, self.app))
-                    return
+                # ESC is no longer handled here -- App intercepts it
+                # centrally and pushes the shared pause overlay (R8,
+                # core/pause_scene.py) before this scene ever sees the
+                # event. Q previously acted as an ESC alternate to match
+                # the original's "ESC or Q quits" behavior; removed for
+                # consistency now that neither Asteroids nor Salvage Run
+                # has a Q shortcut, and Q now means "Quit" specifically
+                # within the pause overlay itself.
 
                 if event.key == pygame.K_LEFT:
                     self.moving_left = True

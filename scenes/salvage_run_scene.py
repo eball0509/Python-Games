@@ -68,10 +68,9 @@ class SalvageRunScene(Scene):
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    from scenes.menu_scene import build_menu_scene
-                    self.manager.switch_to(build_menu_scene(self.manager, self.app))
-                    return
+                # ESC is no longer handled here -- App intercepts it
+                # centrally and pushes the shared pause overlay (R8,
+                # core/pause_scene.py) before this scene ever sees it.
 
                 if not self.started:
                     if event.key == pygame.K_SPACE:
