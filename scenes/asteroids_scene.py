@@ -3,6 +3,20 @@ onto the shared Scene/App architecture. Gameplay behavior (movement,
 timers, scoring, collision, silent reset-to-start-screen on death) is
 preserved to match the original as closely as possible -- see ADR-0002.
 
+Structural changes from the original script:
+  - one shared App owns pygame.init()/window/clock instead of this file
+    owning them
+  - the original's global pygame.time.set_timer() asteroid spawn timers
+    are replaced with per-scene delta-time accumulators (SPAWN_SCHEDULE
+    below), since a global OS-level timer would keep firing into the
+    event queue even while a different scene is active -- same spawn
+    intervals (2s/6s/10s/15s/20s), different mechanism
+  - asset loading goes through the shared, cached AssetManager instead
+    of a raw pygame.image.load()/mixer.Sound() per object
+  - ESC now returns to the main menu instead of quitting the whole
+    process -- the previous behavior doesn't make sense once multiple
+    games share one launcher (this is a navigation change, not a
+    gameplay change, so it's outside ADR-0002's boundary)
 """
 
 import os
@@ -62,10 +76,26 @@ class AsteroidsScene(Scene):
         self.started = False
         self.music_started = False
 
+    def on_exit(self):
+        # pygame.mixer.music is a single global channel shared by the
+        # whole app -- without this, this scene's track keeps looping
+        # forever even after switching to a different scene.
+        pygame.mixer.music.stop()
+
     def handle_events(self, events):
         for event in events:
             if event.type != pygame.KEYDOWN:
                 continue
+
+            # ESC returns to the shared menu from ANY state, including the
+            # start screen -- the original script never wired ESC up on
+            # its start screen at all (it only checked SPACE there), but
+            # that's a navigation gap, not gameplay behavior, so it's
+            # fair game to extend rather than a parity violation.
+            if event.key == pygame.K_ESCAPE:
+                from scenes.menu_scene import build_menu_scene
+                self.manager.switch_to(build_menu_scene(self.manager, self.app))
+                return
 
             if not self.started:
                 if event.key == pygame.K_SPACE:
@@ -73,10 +103,7 @@ class AsteroidsScene(Scene):
                     self.music_started = False
                 continue
 
-            if event.key == pygame.K_ESCAPE:
-                from scenes.menu_scene import build_menu_scene
-                self.manager.switch_to(build_menu_scene(self.manager, self.app))
-            elif event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE:
                 pos = self.rocket.rect[:2]
                 bullet = Bullet(pos, self.rocket.dir, self.size, self.assets)
                 self.bullets.add(bullet)

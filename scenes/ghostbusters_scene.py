@@ -28,20 +28,13 @@ Structural changes from the original:
   - Button click detection still happens inside draw(), matching the
     original's design where Button.draw() both renders AND polls the
     mouse for a click in the same call
-
-KNOWN LIMITATION: the original ran GhostBusters at clock.tick(45) and
-Asteroids at clock.tick(30). Our shared App has ONE clock/fps for every
-scene (R1), so frame-counted animations (e.g. "advance every 7 frames")
-will play back at a slightly different real-world speed than the
-original. Converting those counters to delta-time-based timers would
-fix this, but that changes the literal formula, so this is being left
-as a known, documented trade-off from the R1 architectural decision.
 """
 
 import os
 import pygame
 
 from core.scene import Scene
+from core.components.parallax import ParallaxBackground
 from scenes.ghostbusters.world import World, load_level
 from scenes.ghostbusters.player import Player
 from scenes.ghostbusters.particles import Trail
@@ -113,6 +106,12 @@ class GhostBustersScene(Scene):
         self.MOON = pygame.transform.scale(self.assets.get_image("ghostbusters/moon.png"), (300, 220))
         self.ButtonBG = self.assets.get_image("ghostbusters/ButtonBG.png")
 
+        # Shared component (also used by SalvageRunScene, R7) -- same
+        # 0.6/0.7/0.8 layer speeds as the original's inline scroll code.
+        self.background = ParallaxBackground(
+            [(self.BG1, 0.6), (self.BG2, 0.7), (self.BG3, 0.8)], INTERNAL_SIZE,
+        )
+
     def _load_fonts_and_text(self):
         title_font = "ghostbusters/Aladin-Regular.ttf"
         instructions_font = "ghostbusters/BubblegumSans-Regular.ttf"
@@ -176,6 +175,12 @@ class GhostBustersScene(Scene):
             pygame.mixer.music.play(loops=-1)
             pygame.mixer.music.set_volume(0.5)
             self.music_started = True
+
+    def on_exit(self):
+        # pygame.mixer.music is a single global channel shared by the
+        # whole app -- without this, this scene's track keeps looping
+        # forever even after switching to a different scene.
+        pygame.mixer.music.stop()
 
     def _reset_level(self, level):
         self.trail_group.empty()
@@ -254,10 +259,7 @@ class GhostBustersScene(Scene):
         self._mouse_pos = self._internal_mouse_pos(surface)
 
         self.internal.fill((0, 0, 0))
-        for x in range(5):
-            self.internal.blit(self.BG1, ((x * INTERNAL_SIZE[0]) - self.bg_scroll * 0.6, 0))
-            self.internal.blit(self.BG2, ((x * INTERNAL_SIZE[0]) - self.bg_scroll * 0.7, 0))
-            self.internal.blit(self.BG3, ((x * INTERNAL_SIZE[0]) - self.bg_scroll * 0.8, 0))
+        self.background.draw(self.internal)
 
         if not self.game_start:
             self.internal.blit(self.MOON, (-40, 150))
@@ -391,6 +393,10 @@ class GhostBustersScene(Scene):
             self.p.rect.x -= self.dx
             self.screen_scroll = -self.dx
             self.bg_scroll -= self.screen_scroll
+            # bg_scroll itself still drives the scroll-threshold math above
+            # unchanged (ADR-0002); this just keeps the new shared
+            # ParallaxBackground's render offset in sync with it.
+            self.background.scroll_by(self.screen_scroll)
 
         # --------------------------------------------------- collisions
         if self.p.rect.bottom > INTERNAL_SIZE[1]:
@@ -413,6 +419,7 @@ class GhostBustersScene(Scene):
                 self.p.health = health
                 self.screen_scroll = 0
                 self.bg_scroll = 0
+                self.background.offset = 0.0
             else:
                 self.game_won = True
                 self.game_start = False
@@ -458,6 +465,7 @@ class GhostBustersScene(Scene):
             self._reset_player()
             self.screen_scroll = 0
             self.bg_scroll = 0
+            self.background.offset = 0.0
             self.main_menu = True
             self.about_page = False
             self.controls_page = False
