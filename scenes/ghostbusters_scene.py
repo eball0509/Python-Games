@@ -169,7 +169,7 @@ class GhostBustersScene(Scene):
         self.main_menu_btn = Button(cx - bwidth // 4, cy + 130, self.ButtonBG, 0.5, self.main_menu_label, 20)
 
     # ------------------------------------------------------------- lifecycle
-    def on_enter(self):
+    def _start_music(self):
         if not self.music_started:
             music_path = os.path.join(self.assets.base_path, "ghostbusters/mixkit-complex-desire-1093.mp3")
             pygame.mixer.music.load(music_path)
@@ -177,11 +177,27 @@ class GhostBustersScene(Scene):
             pygame.mixer.music.set_volume(self.assets.master_volume)
             self.music_started = True
 
+    def on_enter(self):
+        self._start_music()
+
     def on_exit(self):
         # pygame.mixer.music is a single global channel shared by the
         # whole app -- without this, this scene's track keeps looping
         # forever even after switching to a different scene.
         pygame.mixer.music.stop()
+
+    def on_resume(self):
+        # Pausing stops the music (on_exit above); this restarts it
+        # without touching main_menu/about_page/game_start/etc -- unlike
+        # on_enter(), which is reserved for a genuinely fresh selection
+        # from the shared menu. Before this fix, SceneManager called
+        # on_enter() on resume too, which risked exactly this kind of
+        # state-reset bug (it happened not to reset menu state here
+        # since this scene's on_enter never touched those flags, but it
+        # did mean resuming played silence forever since music_started
+        # was already True and _start_music()'s guard skipped it).
+        self.music_started = False
+        self._start_music()
 
     def _reset_level(self, level):
         self.trail_group.empty()

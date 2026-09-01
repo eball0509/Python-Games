@@ -62,8 +62,12 @@ class SalvageRunScene(Scene):
         self.spawn_timer = 0.0
         self.moving_up = self.moving_down = self.moving_left = self.moving_right = False
 
-    def on_enter(self):
-        self.started = False
+    # No on_enter()/on_resume() overrides needed: __init__ already sets
+    # started=False for a fresh selection from the menu, and there's no
+    # music here to restart after a pause the way the ported games need.
+    # (An earlier on_enter() override that reset self.started here was
+    # the actual bug -- SceneManager used to call on_enter() on resume
+    # too, so resuming was silently kicking back to the start screen.)
 
     def handle_events(self, events):
         for event in events:

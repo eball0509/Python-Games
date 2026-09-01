@@ -35,11 +35,24 @@ class Scene(ABC):
         raise NotImplementedError
 
     def on_enter(self):
-        """Optional hook: called once when this scene becomes active."""
+        """Called once when this scene becomes active via switch_to() --
+        i.e. a genuinely fresh start (selected from the menu). NOT
+        called when resuming from a pause; see on_resume()."""
         pass
 
     def on_exit(self):
-        """Optional hook: called once when this scene stops being active."""
+        """Called when this scene stops being the active scene, whether
+        switch_to() replaced it or push() covered it with an overlay
+        (e.g. the pause screen)."""
+        pass
+
+    def on_resume(self):
+        """Called when this scene becomes active again after a scene
+        that was pushed on top of it (e.g. the pause overlay) gets
+        popped off. Kept separate from on_enter() so a scene can tell
+        "starting fresh" apart from "continuing where you left off" --
+        conflating the two was the cause of a real bug where resuming
+        from pause reset games back to their start screen."""
         pass
 
 
@@ -77,7 +90,7 @@ class SceneManager:
         old = self._stack.pop()
         old.on_exit()
         if self._stack:
-            self._stack[-1].on_enter()
+            self._stack[-1].on_resume()
 
     def is_empty(self):
         return len(self._stack) == 0

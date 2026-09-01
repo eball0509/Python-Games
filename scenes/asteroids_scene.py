@@ -72,15 +72,21 @@ class AsteroidsScene(Scene):
         self.all_sprites.add(self.rocket)
         self.spawn_timers = [0.0 for _ in SPAWN_SCHEDULE]
 
-    def on_enter(self):
-        self.started = False
-        self.music_started = False
-
     def on_exit(self):
         # pygame.mixer.music is a single global channel shared by the
         # whole app -- without this, this scene's track keeps looping
         # forever even after switching to a different scene.
         pygame.mixer.music.stop()
+
+    def on_resume(self):
+        # Pausing stops the music (on_exit above). Resuming must NOT
+        # touch self.started -- that used to happen accidentally via
+        # on_enter() (which also fires here before this fix), which is
+        # exactly what caused resume to dump players back to the start
+        # screen instead of continuing their run. Resetting only the
+        # music flag makes the next update() naturally reload/replay
+        # whichever track matches the current (untouched) self.started.
+        self.music_started = False
 
     def handle_events(self, events):
         for event in events:
